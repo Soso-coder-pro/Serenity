@@ -17,7 +17,7 @@ export default function TopicDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const nav = useNavigation();
-  const { topics, affirmations, updateTopic, addAffirmation, updateAffirmation, removeAffirmation } = useApp();
+  const { topics, affirmations, sessions, updateTopic, removeTopic, addAffirmation, updateAffirmation, removeAffirmation, removeSession } = useApp();
 
   const topic = topics.find((t) => t.id === id);
   const active = affirmations.filter((a) => a.topicId === id && a.isActive);
@@ -26,17 +26,45 @@ export default function TopicDetailScreen() {
   const [newText, setNewText] = useState('');
   const [showArchived, setShowArchived] = useState(false);
 
+  const deleteTopic = () => {
+    Alert.alert(
+      'Delete topic?',
+      'All its affirmations and session history will also be deleted. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete', style: 'destructive',
+          onPress: async () => {
+            const topicAffs = affirmations.filter((a) => a.topicId === id);
+            const topicSessions = sessions.filter((s) => s.topicId === id);
+            await Promise.all([
+              ...topicAffs.map((a) => removeAffirmation(a.id)),
+              ...topicSessions.map((s) => removeSession(s.id)),
+              removeTopic(id),
+            ]);
+            router.back();
+          },
+        },
+      ]
+    );
+  };
+
   useLayoutEffect(() => {
     if (!topic) return;
     nav.setOptions({
       title: `${topic.emoji} ${topic.name}`,
       headerRight: () => (
-        <TouchableOpacity onPress={() => router.push({ pathname: '/topic/edit', params: { id } })} style={{ marginRight: 4 }}>
-          <Ionicons name="pencil-outline" size={20} color={C.accent} />
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', gap: 4, marginRight: 4 }}>
+          <TouchableOpacity onPress={() => router.push({ pathname: '/topic/edit', params: { id } })} style={{ padding: 6 }}>
+            <Ionicons name="pencil-outline" size={20} color={C.accent} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={deleteTopic} style={{ padding: 6 }}>
+            <Ionicons name="trash-outline" size={20} color={C.danger} />
+          </TouchableOpacity>
+        </View>
       ),
     });
-  }, [topic, nav, id, router]);
+  }, [topic, nav, id, router, affirmations, sessions]);
 
   if (!topic) return <View style={s.center}><Text style={s.sub}>Topic not found.</Text></View>;
 
