@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -34,7 +34,7 @@ function longDate() {
 }
 
 export default function HomeScreen() {
-  const { topics, sessions } = useApp();
+  const { topics, sessions, affirmations, removeTopic, removeAffirmation, removeSession } = useApp();
   const router = useRouter();
 
   const streak = useMemo(() => computeStreak(sessions), [sessions]);
@@ -56,6 +56,34 @@ export default function HomeScreen() {
   }, [sessions, todayKey]);
 
   const activeTopics = topics.filter((t) => t.isActive);
+
+  const handleLongPress = (topicId: string, topicName: string) => {
+    Alert.alert(topicName, undefined, [
+      {
+        text: 'Edit',
+        onPress: () => router.push({ pathname: '/topic/edit', params: { id: topicId } }),
+      },
+      {
+        text: 'Delete', style: 'destructive',
+        onPress: () => {
+          Alert.alert('Delete topic?', 'All affirmations and session history will be deleted.', [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Delete', style: 'destructive',
+              onPress: async () => {
+                await Promise.all([
+                  ...affirmations.filter((a) => a.topicId === topicId).map((a) => removeAffirmation(a.id)),
+                  ...sessions.filter((s) => s.topicId === topicId).map((s) => removeSession(s.id)),
+                  removeTopic(topicId),
+                ]);
+              },
+            },
+          ]);
+        },
+      },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  };
 
   return (
     <SafeAreaView style={s.safe}>
@@ -131,6 +159,8 @@ export default function HomeScreen() {
                 onPress={() =>
                   router.push({ pathname: '/session/setup', params: { topicId: t.id } })
                 }
+                onLongPress={() => handleLongPress(t.id, t.name)}
+                delayLongPress={400}
                 activeOpacity={0.7}
               >
                 <View style={[s.swatch, { backgroundColor: t.soft, borderColor: t.color + '44' }]}>
