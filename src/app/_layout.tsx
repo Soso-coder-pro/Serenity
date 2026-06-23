@@ -1,7 +1,7 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { AppProvider } from '../src/context/AppContext';
-import { C } from '../src/theme';
+import { AppProvider } from '../context/AppContext';
+import { C } from '../theme';
 
 export default function RootLayout() {
   return (

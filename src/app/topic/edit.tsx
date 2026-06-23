@@ -4,8 +4,8 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useApp } from '../../src/context/AppContext';
-import { C, R, SHADOW, TOPIC_COLORS, TOPIC_EMOJIS } from '../../src/theme';
+import { useApp } from '../../context/AppContext';
+import { C, R, SHADOW, TOPIC_COLORS, TOPIC_EMOJIS } from '../../theme';
 
 export default function EditTopicScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();

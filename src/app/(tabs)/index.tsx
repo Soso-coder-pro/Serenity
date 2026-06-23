@@ -5,9 +5,9 @@ import {
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useApp } from '../../src/context/AppContext';
-import { C, R, SHADOW, MOOD_EMOJIS, MOOD_LABELS } from '../../src/theme';
-import { Session } from '../../src/types';
+import { useApp } from '../../context/AppContext';
+import { C, R, SHADOW, MOOD_EMOJIS, MOOD_LABELS } from '../../theme';
+import { Session } from '../../types';
 
 function dateKey(d: Date) {
   return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;

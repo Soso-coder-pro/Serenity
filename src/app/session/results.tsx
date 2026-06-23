@@ -5,9 +5,9 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useApp } from '../../src/context/AppContext';
-import { MoodPicker } from '../../src/components/MoodPicker';
-import { C, R, SHADOW } from '../../src/theme';
+import { useApp } from '../../context/AppContext';
+import { MoodPicker } from '../../components/MoodPicker';
+import { C, R, SHADOW } from '../../theme';
 
 function uid() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
 

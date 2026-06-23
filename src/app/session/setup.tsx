@@ -4,10 +4,10 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useApp } from '../../src/context/AppContext';
-import { MoodPicker } from '../../src/components/MoodPicker';
-import { C, R, SHADOW } from '../../src/theme';
-import { SessionMode } from '../../src/types';
+import { useApp } from '../../context/AppContext';
+import { MoodPicker } from '../../components/MoodPicker';
+import { C, R, SHADOW } from '../../theme';
+import { SessionMode } from '../../types';
 
 const MODES: { id: SessionMode; title: string; desc: string }[] = [
   { id: 'manual', title: 'Tap to count', desc: 'Tap as you complete each affirmation' },

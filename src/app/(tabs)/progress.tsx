@@ -1,9 +1,9 @@
 import React, { useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useApp } from '../../src/context/AppContext';
-import { C, R, SHADOW } from '../../src/theme';
-import { Session } from '../../src/types';
+import { useApp } from '../../context/AppContext';
+import { C, R, SHADOW } from '../../theme';
+import { Session } from '../../types';
 
 function dateKey(d: Date) { return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`; }
 function computeStreak(sessions: Session[]) {

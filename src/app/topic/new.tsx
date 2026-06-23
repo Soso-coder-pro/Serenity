@@ -4,8 +4,8 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useApp } from '../../src/context/AppContext';
-import { C, R, SHADOW, TOPIC_COLORS, TOPIC_EMOJIS } from '../../src/theme';
+import { useApp } from '../../context/AppContext';
+import { C, R, SHADOW, TOPIC_COLORS, TOPIC_EMOJIS } from '../../theme';
 
 function uid() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
 

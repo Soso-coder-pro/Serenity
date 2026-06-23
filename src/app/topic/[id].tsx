@@ -6,10 +6,10 @@ import {
 import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useApp } from '../../src/context/AppContext';
-import { AffirmationItem } from '../../src/components/AffirmationItem';
-import { C, R, SHADOW } from '../../src/theme';
-import { Affirmation } from '../../src/types';
+import { useApp } from '../../context/AppContext';
+import { AffirmationItem } from '../../components/AffirmationItem';
+import { C, R, SHADOW } from '../../theme';
+import { Affirmation } from '../../types';
 
 function uid() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
 

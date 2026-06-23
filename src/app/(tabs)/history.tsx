@@ -3,9 +3,9 @@ import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useApp } from '../../src/context/AppContext';
-import { C, R, MOOD_LABELS, MOOD_EMOJIS } from '../../src/theme';
-import { Session } from '../../src/types';
+import { useApp } from '../../context/AppContext';
+import { C, R, MOOD_LABELS, MOOD_EMOJIS } from '../../theme';
+import { Session } from '../../types';
 
 type Filter = 'all' | 'today' | 'week' | 'month';
 const FILTERS: { id: Filter; label: string }[] = [

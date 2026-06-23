@@ -5,9 +5,9 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-import { useApp } from '../../src/context/AppContext';
-import { C, R } from '../../src/theme';
-import { SessionMode } from '../../src/types';
+import { useApp } from '../../context/AppContext';
+import { C, R } from '../../theme';
+import { SessionMode } from '../../types';
 
 function pad(n: number) { return String(n).padStart(2, '0'); }
 function fmt(sec: number) {
