@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, Switch, Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,7 +18,7 @@ const MODES: { id: SessionMode; title: string; desc: string }[] = [
 export default function SetupScreen() {
   const { topicId: paramTopicId } = useLocalSearchParams<{ topicId?: string }>();
   const router = useRouter();
-  const { topics } = useApp();
+  const { topics, hapticsEnabled, setHapticsEnabled } = useApp();
 
   const activeTopics = topics.filter((t) => t.isActive);
   const defaultTopic = activeTopics.find((t) => t.id === paramTopicId) || activeTopics[0];
@@ -124,6 +124,24 @@ export default function SetupScreen() {
         <View style={s.moodCard}>
           <MoodPicker value={moodBefore} onChange={setMoodBefore} accentColor={topic?.color ?? C.accentMid} />
         </View>
+
+        {Platform.OS !== 'web' && (
+          <>
+            <Text style={s.sectionLabel}>Settings</Text>
+            <View style={s.settingRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={s.rowTitle}>Vibration on each affirmation</Text>
+                <Text style={s.rowDesc}>Feel a light tap when you count one</Text>
+              </View>
+              <Switch
+                value={hapticsEnabled}
+                onValueChange={setHapticsEnabled}
+                trackColor={{ true: C.accent }}
+                thumbColor={C.white}
+              />
+            </View>
+          </>
+        )}
 
         <TouchableOpacity
           style={[s.beginBtn, !topicId && s.beginBtnDisabled]}

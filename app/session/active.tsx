@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, Animated,
+  View, Text, TouchableOpacity, StyleSheet, Animated, Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
 import { useApp } from '../../src/context/AppContext';
 import { C, R } from '../../src/theme';
 import { SessionMode } from '../../src/types';
@@ -18,7 +19,7 @@ export default function ActiveScreen() {
   const { topicId, mode: modeParam, target: targetParam, moodBefore: mbParam } =
     useLocalSearchParams<{ topicId: string; mode: string; target: string; moodBefore: string }>();
   const router = useRouter();
-  const { topics } = useApp();
+  const { topics, hapticsEnabled } = useApp();
 
   const topic = topics.find((t) => t.id === topicId);
   const mode = (modeParam as SessionMode) || 'manual';
@@ -64,7 +65,13 @@ export default function ActiveScreen() {
     setPaused((v) => !v);
   };
 
-  const tap = () => { if (!paused) setCount((v) => v + 1); };
+  const tap = () => {
+    if (paused) return;
+    setCount((v) => v + 1);
+    if (hapticsEnabled && Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+  };
 
   const end = () => {
     const dur = Math.max(1, Math.round(elapsed / 60));

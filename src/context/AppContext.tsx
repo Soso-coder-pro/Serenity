@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Topic, Affirmation, Session } from '../types';
 import {
   getTopics, saveTopic, deleteTopic,
@@ -6,11 +7,15 @@ import {
   getSessions, saveSession, deleteSession,
 } from '../storage';
 
+const HAPTICS_KEY = '@ser_haptics';
+
 interface Ctx {
   topics: Topic[];
   affirmations: Affirmation[];
   sessions: Session[];
   loading: boolean;
+  hapticsEnabled: boolean;
+  setHapticsEnabled: (v: boolean) => Promise<void>;
   addTopic: (t: Topic) => Promise<void>;
   updateTopic: (t: Topic) => Promise<void>;
   removeTopic: (id: string) => Promise<void>;
@@ -28,16 +33,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [affirmations, setAffirmations] = useState<Affirmation[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hapticsEnabled, setHapticsState] = useState(true);
 
   const load = useCallback(async () => {
-    const [t, a, s] = await Promise.all([getTopics(), getAffirmations(), getSessions()]);
+    const [t, a, s, h] = await Promise.all([
+      getTopics(), getAffirmations(), getSessions(),
+      AsyncStorage.getItem(HAPTICS_KEY),
+    ]);
     setTopics(t);
     setAffirmations(a);
     setSessions(s);
+    if (h !== null) setHapticsState(h === 'true');
     setLoading(false);
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  const setHapticsEnabled = async (v: boolean) => {
+    await AsyncStorage.setItem(HAPTICS_KEY, String(v));
+    setHapticsState(v);
+  };
 
   const addTopic = async (t: Topic) => { await saveTopic(t); setTopics(p => [...p, t]); };
   const updateTopic = async (t: Topic) => { await saveTopic(t); setTopics(p => p.map(x => x.id === t.id ? t : x)); };
@@ -53,6 +68,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   return (
     <AppContext.Provider value={{
       topics, affirmations, sessions, loading,
+      hapticsEnabled, setHapticsEnabled,
       addTopic, updateTopic, removeTopic,
       addAffirmation, updateAffirmation, removeAffirmation,
       addSession, removeSession,

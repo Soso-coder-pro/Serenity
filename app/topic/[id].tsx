@@ -27,8 +27,16 @@ export default function TopicDetailScreen() {
   const [showArchived, setShowArchived] = useState(false);
 
   useLayoutEffect(() => {
-    if (topic) nav.setOptions({ title: `${topic.emoji} ${topic.name}` });
-  }, [topic, nav]);
+    if (!topic) return;
+    nav.setOptions({
+      title: `${topic.emoji} ${topic.name}`,
+      headerRight: () => (
+        <TouchableOpacity onPress={() => router.push({ pathname: '/topic/edit', params: { id } })} style={{ marginRight: 4 }}>
+          <Ionicons name="pencil-outline" size={20} color={C.accent} />
+        </TouchableOpacity>
+      ),
+    });
+  }, [topic, nav, id, router]);
 
   if (!topic) return <View style={s.center}><Text style={s.sub}>Topic not found.</Text></View>;
 

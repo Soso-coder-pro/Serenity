@@ -19,6 +19,7 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="topic/new" options={{ title: 'New topic', presentation: 'modal' }} />
         <Stack.Screen name="topic/[id]" options={{ title: 'Affirmations' }} />
+        <Stack.Screen name="topic/edit" options={{ title: 'Edit topic', presentation: 'modal' }} />
         <Stack.Screen name="session/setup" options={{ title: 'Set intention', presentation: 'modal' }} />
         <Stack.Screen name="session/active" options={{ headerShown: false, gestureEnabled: false }} />
         <Stack.Screen name="session/results" options={{ title: 'Log session', presentation: 'modal', gestureEnabled: false }} />

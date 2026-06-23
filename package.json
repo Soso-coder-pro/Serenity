@@ -17,6 +17,7 @@
     "expo-status-bar": "*",
     "@expo/vector-icons": "*",
     "@react-native-async-storage/async-storage": "*",
+    "expo-haptics": "*",
     "react": "*",
     "react-dom": "*",
     "react-native": "*",
