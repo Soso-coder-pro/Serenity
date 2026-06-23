@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import 'react-native-get-random-values';
 import { useApp } from '../../src/context/AppContext';
 import { COLORS, TOPIC_COLORS, TOPIC_EMOJIS, RADIUS, SHADOW } from '../../src/theme';
 
