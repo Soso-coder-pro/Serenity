@@ -1,11 +1,6 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
-import { COLORS, RADIUS, SHADOW } from '../theme';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { C, R, SHADOW } from '../theme';
 import { Topic, Session } from '../types';
 
 interface Props {
@@ -15,128 +10,48 @@ interface Props {
 }
 
 export function TopicCard({ topic, sessions, onPress }: Props) {
-  const topicSessions = sessions.filter((s) => s.topicId === topic.id);
-  const totalMinutes = topicSessions.reduce(
-    (sum, s) => sum + s.durationMinutes,
-    0
-  );
-  const totalAffirmations = topicSessions.reduce(
-    (sum, s) => sum + s.affirmationsReached,
-    0
-  );
+  const ts = sessions.filter((s) => s.topicId === topic.id);
+  const totalMinutes = ts.reduce((a, s) => a + s.durationMinutes, 0);
+  const totalAff = ts.reduce((a, s) => a + s.affirmationsReached, 0);
 
   return (
-    <TouchableOpacity
-      style={[styles.card, { borderLeftColor: topic.color }]}
-      onPress={onPress}
-      activeOpacity={0.7}
-    >
-      <View style={styles.header}>
-        <View style={[styles.emojiBox, { backgroundColor: topic.color + '22' }]}>
-          <Text style={styles.emoji}>{topic.emoji}</Text>
+    <TouchableOpacity style={[s.card, { borderLeftColor: topic.color }]} onPress={onPress} activeOpacity={0.7}>
+      <View style={s.header}>
+        <View style={[s.emojiBox, { backgroundColor: topic.soft }]}>
+          <Text style={s.emoji}>{topic.emoji}</Text>
         </View>
-        <View style={styles.titleArea}>
-          <Text style={styles.name} numberOfLines={1}>
-            {topic.name}
-          </Text>
-          {topic.description ? (
-            <Text style={styles.desc} numberOfLines={1}>
-              {topic.description}
-            </Text>
-          ) : null}
+        <View style={s.titleArea}>
+          <Text style={s.name} numberOfLines={1}>{topic.name}</Text>
+          {topic.description ? <Text style={s.desc} numberOfLines={1}>{topic.description}</Text> : null}
         </View>
         {!topic.isActive && (
-          <View style={styles.endedBadge}>
-            <Text style={styles.endedText}>Ended</Text>
-          </View>
+          <View style={s.endedBadge}><Text style={s.endedText}>Ended</Text></View>
         )}
       </View>
-
-      <View style={styles.stats}>
-        <Stat label="Sessions" value={String(topicSessions.length)} />
-        <Stat label="Minutes" value={String(totalMinutes)} />
-        <Stat label="Affirmations" value={String(totalAffirmations)} />
+      <View style={s.stats}>
+        {[['Sessions', ts.length], ['Minutes', totalMinutes], ['Affirmations', totalAff]].map(([label, val]) => (
+          <View key={label as string} style={s.stat}>
+            <Text style={s.statVal}>{val}</Text>
+            <Text style={s.statLabel}>{label}</Text>
+          </View>
+        ))}
       </View>
     </TouchableOpacity>
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.stat}>
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: COLORS.card,
-    borderRadius: RADIUS.md,
-    padding: 16,
-    marginBottom: 12,
-    borderLeftWidth: 4,
-    ...SHADOW,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  emojiBox: {
-    width: 44,
-    height: 44,
-    borderRadius: RADIUS.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  emoji: {
-    fontSize: 22,
-  },
-  titleArea: {
-    flex: 1,
-  },
-  name: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: COLORS.text,
-  },
-  desc: {
-    fontSize: 13,
-    color: COLORS.subtext,
-    marginTop: 2,
-  },
-  endedBadge: {
-    backgroundColor: COLORS.border,
-    borderRadius: 20,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  endedText: {
-    fontSize: 11,
-    color: COLORS.subtext,
-    fontWeight: '600',
-  },
-  stats: {
-    flexDirection: 'row',
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-    paddingTop: 10,
-  },
-  stat: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  statValue: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: COLORS.text,
-  },
-  statLabel: {
-    fontSize: 11,
-    color: COLORS.subtext,
-    marginTop: 2,
-  },
+const s = StyleSheet.create({
+  card: { backgroundColor: C.card, borderRadius: R.md, padding: 16, marginBottom: 12, borderLeftWidth: 4, borderWidth: 1, borderColor: C.border, ...SHADOW },
+  header: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+  emojiBox: { width: 44, height: 44, borderRadius: R.sm, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
+  emoji: { fontSize: 22 },
+  titleArea: { flex: 1 },
+  name: { fontSize: 16, fontWeight: '700', color: C.text },
+  desc: { fontSize: 13, color: C.sub, marginTop: 2 },
+  endedBadge: { backgroundColor: C.statBg, borderRadius: 20, paddingHorizontal: 8, paddingVertical: 3 },
+  endedText: { fontSize: 11, color: C.sub, fontWeight: '600' },
+  stats: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: C.border, paddingTop: 10 },
+  stat: { flex: 1, alignItems: 'center' },
+  statVal: { fontSize: 18, fontWeight: '700', color: C.text },
+  statLabel: { fontSize: 11, color: C.sub, marginTop: 2 },
 });
