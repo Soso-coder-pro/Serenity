@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, Switch, Platform,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet, Switch, Platform, TextInput,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -111,7 +111,18 @@ export default function SetupScreen() {
                 <TouchableOpacity style={s.stepBtn} onPress={() => setTarget((v) => Math.max(1, v - 1))}>
                   <Text style={s.stepBtnText}>−</Text>
                 </TouchableOpacity>
-                <Text style={s.stepVal}>{target}</Text>
+                <TextInput
+                  style={s.stepInput}
+                  value={String(target)}
+                  onChangeText={(t) => {
+                    const n = parseInt(t, 10);
+                    if (!isNaN(n) && n > 0) setTarget(n);
+                    else if (t === '') setTarget(1);
+                  }}
+                  keyboardType="numeric"
+                  selectTextOnFocus
+                  returnKeyType="done"
+                />
                 <TouchableOpacity style={s.stepBtn} onPress={() => setTarget((v) => v + 1)}>
                   <Text style={s.stepBtnText}>+</Text>
                 </TouchableOpacity>
@@ -182,7 +193,12 @@ const s = StyleSheet.create({
   stepper: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   stepBtn: { width: 34, height: 34, borderRadius: R.full, borderWidth: 1, borderColor: C.border, backgroundColor: C.statBg, alignItems: 'center', justifyContent: 'center' },
   stepBtnText: { fontSize: 20, color: C.accent, lineHeight: 24 },
-  stepVal: { fontSize: 22, fontWeight: '700', color: C.text, minWidth: 34, textAlign: 'center' },
+  stepInput: {
+    fontSize: 22, fontWeight: '700', color: C.text,
+    minWidth: 56, textAlign: 'center',
+    borderBottomWidth: 2, borderBottomColor: C.accent,
+    paddingHorizontal: 4, paddingVertical: 2,
+  },
 
   moodCard: { backgroundColor: C.card, borderRadius: R.lg, padding: 18, borderWidth: 1, borderColor: C.border },
 
