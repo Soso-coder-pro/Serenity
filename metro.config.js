@@ -3,11 +3,12 @@ const { getDefaultConfig } = require('expo/metro-config');
 const config = getDefaultConfig(__dirname);
 
 // React Compiler injects `react/compiler-runtime` imports but React 18
-// doesn't export that subpath. Redirect it to the standalone package.
+// doesn't export that subpath. Redirect it to our local shim.
+const path = require('path');
 config.resolver.resolveRequest = (context, moduleName, platform) => {
   if (moduleName === 'react/compiler-runtime') {
     return {
-      filePath: require.resolve('react-compiler-runtime'),
+      filePath: path.resolve(__dirname, 'compiler-runtime-shim.js'),
       type: 'sourceFile',
     };
   }
