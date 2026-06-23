@@ -112,6 +112,20 @@ export default function ActiveScreen() {
     return () => clearInterval(id);
   }, [paused]);
 
+  // Vibration forte quand on atteint l'objectif (une seule fois par franchissement)
+  const goalReachedRef = useRef(false);
+  useEffect(() => {
+    if (Platform.OS === 'web' || !hapticsEnabled) return;
+    const sessionGoalHit = mode === 'target' && count >= target && target > 0;
+    const globalGoalHit = globalGoal > 0 && (globalBase + count) >= globalGoal;
+    const hit = sessionGoalHit || globalGoalHit;
+    if (hit && !goalReachedRef.current) {
+      goalReachedRef.current = true;
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
+    if (!hit) goalReachedRef.current = false;
+  }, [count, mode, target, globalGoal, globalBase, hapticsEnabled]);
+
   useEffect(() => {
     if (mode !== 'timer') return;
     const anim = Animated.loop(
