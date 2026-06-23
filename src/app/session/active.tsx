@@ -30,34 +30,29 @@ interface PieProps {
 function PieProgress({ progress, size, fillColor, bgColor, children }: PieProps) {
   const half = size / 2;
   const clamped = Math.min(Math.max(progress, 0), 1);
-  const deg = clamped * 360;
 
-  // Right half sweeps 0→180° (first 50%)
-  const rightRotate = `${Math.min(deg, 180) - 180}deg`;
-  // Left half sweeps 0→180° (second 50%), only rendered once > 50%
-  const leftRotate = `${Math.max(deg - 180, 0)}deg`;
+  // Right clip: sweeps from -180deg (0%) to 0deg (50%), then stays at 0deg
+  const rightAngle = Math.min(clamped, 0.5) * 360 - 180;
+  // Left clip: sweeps from 180deg (50%) to 0deg (100%), only rendered past 50%
+  const leftAngle = (1 - clamped) * 360;
 
   return (
     <View style={{ width: size, height: size, borderRadius: half, backgroundColor: bgColor, overflow: 'hidden' }}>
-      {/* Right sweep: clips right half, rotates a full square */}
+      {/* Right half clip — rotating container colors only its right half so
+          rotation actually sweeps (a full square has 180° symmetry and wouldn't) */}
       <View style={{ position: 'absolute', top: 0, right: 0, width: half, height: size, overflow: 'hidden' }}>
-        <View style={{
-          position: 'absolute', top: 0, left: -half, width: size, height: size,
-          backgroundColor: fillColor,
-          transform: [{ rotate: rightRotate }],
-        }} />
+        <View style={{ position: 'absolute', top: 0, left: -half, width: size, height: size, transform: [{ rotate: `${rightAngle}deg` }] }}>
+          <View style={{ position: 'absolute', right: 0, width: half, height: size, backgroundColor: fillColor }} />
+        </View>
       </View>
-      {/* Left sweep: only once past 50% */}
-      {deg > 180 && (
+      {/* Left half clip — only appears after 50% */}
+      {clamped > 0.5 && (
         <View style={{ position: 'absolute', top: 0, left: 0, width: half, height: size, overflow: 'hidden' }}>
-          <View style={{
-            position: 'absolute', top: 0, left: 0, width: size, height: size,
-            backgroundColor: fillColor,
-            transform: [{ rotate: leftRotate }],
-          }} />
+          <View style={{ position: 'absolute', top: 0, left: 0, width: size, height: size, transform: [{ rotate: `${leftAngle}deg` }] }}>
+            <View style={{ position: 'absolute', left: 0, width: half, height: size, backgroundColor: fillColor }} />
+          </View>
         </View>
       )}
-      {/* Inner content */}
       <View style={{ ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' }}>
         {children}
       </View>
