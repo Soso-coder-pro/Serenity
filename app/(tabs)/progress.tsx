@@ -1,183 +1,177 @@
 import React, { useMemo } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../../src/context/AppContext';
-import { COLORS, RADIUS, SHADOW } from '../../src/theme';
+import { C, R, SHADOW } from '../../src/theme';
 import { Session } from '../../src/types';
 
-function getStreak(sessions: Session[]): number {
-  if (!sessions.length) return 0;
-  const days = new Set(
-    sessions.map((s) =>
-      new Date(s.startedAt).toDateString()
-    )
-  );
-  let streak = 0;
-  const d = new Date();
-  while (days.has(d.toDateString())) {
-    streak++;
-    d.setDate(d.getDate() - 1);
-  }
-  return streak;
-}
-
-function getLast7Days(): string[] {
-  const days: string[] = [];
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    days.push(d.toDateString());
-  }
-  return days;
+function dateKey(d: Date) { return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`; }
+function computeStreak(sessions: Session[]) {
+  const keys = new Set(sessions.map((s) => dateKey(new Date(s.startedAt))));
+  let d = new Date();
+  if (!keys.has(dateKey(d))) d.setDate(d.getDate() - 1);
+  let n = 0;
+  while (keys.has(dateKey(d))) { n++; d.setDate(d.getDate() - 1); }
+  return n;
 }
 
 export default function ProgressScreen() {
   const { sessions, topics } = useApp();
 
+  const streak = useMemo(() => computeStreak(sessions), [sessions]);
+  const totalMinutes = sessions.reduce((a, s) => a + s.durationMinutes, 0);
   const totalSessions = sessions.length;
-  const totalMinutes = sessions.reduce((s, x) => s + x.durationMinutes, 0);
-  const totalAffirmations = sessions.reduce((s, x) => s + x.affirmationsReached, 0);
-  const streak = useMemo(() => getStreak(sessions), [sessions]);
 
-  const last7 = useMemo(() => getLast7Days(), []);
-  const sessionsPerDay = useMemo(
-    () =>
-      last7.map((day) => ({
-        day: new Date(day).toLocaleDateString('en-US', { weekday: 'short' }),
-        count: sessions.filter(
-          (s) => new Date(s.startedAt).toDateString() === day
-        ).length,
-      })),
-    [sessions, last7]
-  );
+  // Week bars (last 7 days, in minutes)
+  const weekBars = useMemo(() => {
+    const letters = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+    const todayKey = dateKey(new Date());
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - (6 - i));
+      const k = dateKey(d);
+      const mins = sessions.filter((s) => dateKey(new Date(s.startedAt)) === k)
+        .reduce((a, s) => a + s.durationMinutes, 0);
+      return { letter: letters[d.getDay()], mins, today: k === todayKey };
+    });
+  }, [sessions]);
 
-  const maxDayCount = Math.max(...sessionsPerDay.map((d) => d.count), 1);
+  const weekTotal = weekBars.reduce((a, b) => a + b.mins, 0);
+  const weekMax = Math.max(...weekBars.map((b) => b.mins), 1);
 
-  const topicStats = useMemo(() => {
-    return topics
+  // Month calendar
+  const calendarData = useMemo(() => {
+    const now = new Date();
+    const y = now.getFullYear(), mo = now.getMonth();
+    const daysInMonth = new Date(y, mo + 1, 0).getDate();
+    const firstDow = new Date(y, mo, 1).getDay();
+    const sessionKeys = new Set(
+      sessions
+        .filter((s) => {
+          const sd = new Date(s.startedAt);
+          return sd.getFullYear() === y && sd.getMonth() === mo;
+        })
+        .map((s) => new Date(s.startedAt).getDate())
+    );
+    const cells: { label: string; hasSession: boolean; isToday: boolean }[] = [];
+    for (let i = 0; i < firstDow; i++) cells.push({ label: '', hasSession: false, isToday: false });
+    for (let d = 1; d <= daysInMonth; d++) {
+      cells.push({ label: String(d), hasSession: sessionKeys.has(d), isToday: d === now.getDate() });
+    }
+    return cells;
+  }, [sessions]);
+
+  const monthLabel = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+  // Per topic stats
+  const topicStats = useMemo(() =>
+    topics
       .map((t) => {
         const ts = sessions.filter((s) => s.topicId === t.id);
-        return {
-          ...t,
-          sessionCount: ts.length,
-          totalMinutes: ts.reduce((s, x) => s + x.durationMinutes, 0),
-        };
+        return { ...t, count: ts.length, mins: ts.reduce((a, s) => a + s.durationMinutes, 0) };
       })
-      .filter((t) => t.sessionCount > 0)
-      .sort((a, b) => b.sessionCount - a.sessionCount);
-  }, [topics, sessions]);
-
-  const maxTopicSessions = Math.max(...topicStats.map((t) => t.sessionCount), 1);
+      .filter((t) => t.count > 0)
+      .sort((a, b) => b.count - a.count),
+    [topics, sessions]
+  );
+  const maxCount = Math.max(...topicStats.map((t) => t.count), 1);
 
   return (
-    <SafeAreaView style={styles.safe} edges={['bottom']}>
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Summary cards */}
-        <View style={styles.summaryRow}>
-          <SummaryCard
-            icon="flame-outline"
-            value={streak}
-            label="Day Streak"
-            color="#FF6B6B"
-          />
-          <SummaryCard
-            icon="layers-outline"
-            value={totalSessions}
-            label="Sessions"
-            color={COLORS.primary}
-          />
-        </View>
-        <View style={styles.summaryRow}>
-          <SummaryCard
-            icon="time-outline"
-            value={totalMinutes}
-            label="Minutes"
-            color="#5C9BF5"
-          />
-          <SummaryCard
-            icon="star-outline"
-            value={totalAffirmations}
-            label="Affirmations"
-            color="#FFB347"
-          />
+    <SafeAreaView style={s.safe}>
+      <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
+        <Text style={s.pageTitle}>Progress</Text>
+
+        {/* Top stats */}
+        <View style={s.statsRow}>
+          <View style={[s.heroStat, { backgroundColor: C.heroTo }]}>
+            <Text style={s.heroNum}>{streak}</Text>
+            <Text style={s.heroLabel}>day streak</Text>
+          </View>
+          <View style={s.statCard}>
+            <Text style={s.statNum}>{totalMinutes}</Text>
+            <Text style={s.statLabel}>total minutes</Text>
+          </View>
+          <View style={s.statCard}>
+            <Text style={s.statNum}>{totalSessions}</Text>
+            <Text style={s.statLabel}>sessions</Text>
+          </View>
         </View>
 
-        {/* Last 7 days bar chart */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Sessions — last 7 days</Text>
-          <View style={styles.barChart}>
-            {sessionsPerDay.map((d) => (
-              <View key={d.day} style={styles.barWrapper}>
-                <Text style={styles.barValue}>{d.count > 0 ? d.count : ''}</Text>
-                <View style={styles.barTrack}>
-                  <View
-                    style={[
-                      styles.bar,
-                      {
-                        height: `${Math.max((d.count / maxDayCount) * 100, d.count > 0 ? 10 : 0)}%`,
-                        backgroundColor:
-                          d.count > 0 ? COLORS.primary : COLORS.border,
-                      },
-                    ]}
-                  />
+        {/* Week bar chart */}
+        <View style={s.card}>
+          <View style={s.cardHeader}>
+            <Text style={s.cardTitle}>Minutes this week</Text>
+            <Text style={s.cardSub}>{weekTotal} min</Text>
+          </View>
+          <View style={s.barChart}>
+            {weekBars.map((b, i) => {
+              const h = b.mins === 0 ? 4 : Math.round(12 + (b.mins / weekMax) * 72);
+              return (
+                <View key={i} style={s.barCol}>
+                  <View style={s.barTrack}>
+                    <View style={[s.bar, { height: h, backgroundColor: b.today ? C.accent : C.accentLight }]} />
+                  </View>
+                  <Text style={[s.barLabel, { color: b.today ? C.accent : C.sub }]}>{b.letter}</Text>
                 </View>
-                <Text style={styles.barLabel}>{d.day}</Text>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* Calendar heatmap */}
+        <View style={s.card}>
+          <Text style={s.cardTitle}>{monthLabel}</Text>
+          <View style={s.weekHeaders}>
+            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((h, i) => (
+              <Text key={i} style={s.weekHeader}>{h}</Text>
+            ))}
+          </View>
+          <View style={s.calGrid}>
+            {calendarData.map((c, i) => (
+              <View key={i} style={s.calCell}>
+                {c.label ? (
+                  <View style={[
+                    s.calDay,
+                    c.hasSession && { backgroundColor: C.accentSoft },
+                    c.isToday && { backgroundColor: C.accent },
+                  ]}>
+                    <Text style={[
+                      s.calDayText,
+                      c.hasSession && { color: C.accent },
+                      c.isToday && { color: C.white },
+                    ]}>{c.label}</Text>
+                  </View>
+                ) : null}
               </View>
             ))}
           </View>
         </View>
 
-        {/* Per-topic stats */}
+        {/* Per-topic */}
         {topicStats.length > 0 && (
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>By topic</Text>
-            {topicStats.map((t) => (
-              <View key={t.id} style={styles.topicRow}>
-                <Text style={styles.topicEmoji}>{t.emoji}</Text>
-                <View style={styles.topicInfo}>
-                  <View style={styles.topicLabelRow}>
-                    <Text style={styles.topicName} numberOfLines={1}>
-                      {t.name}
-                    </Text>
-                    <Text style={styles.topicSessions}>
-                      {t.sessionCount} session{t.sessionCount !== 1 ? 's' : ''}
-                    </Text>
+          <View style={s.card}>
+            <Text style={s.cardTitle}>Sessions by topic</Text>
+            <View style={s.topicList}>
+              {topicStats.map((t) => (
+                <View key={t.id} style={s.topicRow}>
+                  <View style={s.topicHeader}>
+                    <Text style={s.topicName}>{t.emoji} {t.name}</Text>
+                    <Text style={s.topicMeta}>{t.count} sessions · {t.mins} min</Text>
                   </View>
-                  <View style={styles.progressTrack}>
-                    <View
-                      style={[
-                        styles.progressFill,
-                        {
-                          width: `${(t.sessionCount / maxTopicSessions) * 100}%`,
-                          backgroundColor: t.color,
-                        },
-                      ]}
-                    />
+                  <View style={s.progressTrack}>
+                    <View style={[s.progressFill, { width: `${(t.count / maxCount) * 100}%`, backgroundColor: t.color }]} />
                   </View>
-                  <Text style={styles.topicMinutes}>{t.totalMinutes} min total</Text>
                 </View>
-              </View>
-            ))}
+              ))}
+            </View>
           </View>
         )}
 
         {sessions.length === 0 && (
-          <View style={styles.empty}>
-            <Text style={styles.emptyEmoji}>📊</Text>
-            <Text style={styles.emptyTitle}>No data yet</Text>
-            <Text style={styles.emptyDesc}>
-              Complete sessions to see your progress here.
-            </Text>
+          <View style={s.empty}>
+            <Text style={s.emptyEmoji}>📊</Text>
+            <Text style={s.emptyTitle}>No data yet</Text>
+            <Text style={s.emptySub}>Complete your first session to see progress here.</Text>
           </View>
         )}
       </ScrollView>
@@ -185,165 +179,50 @@ export default function ProgressScreen() {
   );
 }
 
-function SummaryCard({
-  icon,
-  value,
-  label,
-  color,
-}: {
-  icon: string;
-  value: number;
-  label: string;
-  color: string;
-}) {
-  return (
-    <View style={[styles.summaryCard, { borderTopColor: color }]}>
-      <Ionicons name={icon as any} size={22} color={color} />
-      <Text style={[styles.summaryValue, { color }]}>{value}</Text>
-      <Text style={styles.summaryLabel}>{label}</Text>
-    </View>
-  );
-}
+const s = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: C.bg },
+  scroll: { padding: 20, paddingBottom: 40 },
+  pageTitle: { fontSize: 28, fontWeight: '700', color: C.text, marginBottom: 18 },
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: COLORS.background },
-  scroll: { flex: 1 },
-  content: { padding: 16, paddingBottom: 32 },
-  summaryRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 12,
+  statsRow: { flexDirection: 'row', gap: 10, marginBottom: 14 },
+  heroStat: {
+    flex: 1, borderRadius: R.lg, padding: 16,
+    ...SHADOW, shadowColor: C.heroTo, shadowOpacity: 0.3,
   },
-  summaryCard: {
-    flex: 1,
-    backgroundColor: COLORS.card,
-    borderRadius: RADIUS.md,
-    padding: 16,
-    alignItems: 'center',
-    borderTopWidth: 3,
-    ...SHADOW,
-  },
-  summaryValue: {
-    fontSize: 28,
-    fontWeight: '800',
-    marginTop: 6,
-  },
-  summaryLabel: {
-    fontSize: 12,
-    color: COLORS.subtext,
-    marginTop: 2,
-    fontWeight: '600',
-  },
-  card: {
-    backgroundColor: COLORS.card,
-    borderRadius: RADIUS.md,
-    padding: 16,
-    marginBottom: 12,
-    ...SHADOW,
-  },
-  cardTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: COLORS.text,
-    marginBottom: 16,
-  },
-  barChart: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    height: 120,
-    gap: 4,
-  },
-  barWrapper: {
-    flex: 1,
-    alignItems: 'center',
-    height: '100%',
-    justifyContent: 'flex-end',
-  },
-  barValue: {
-    fontSize: 11,
-    color: COLORS.primary,
-    fontWeight: '700',
-    marginBottom: 2,
-    height: 16,
-  },
-  barTrack: {
-    width: '70%',
-    height: 80,
-    justifyContent: 'flex-end',
-    borderRadius: 4,
-    overflow: 'hidden',
-    backgroundColor: COLORS.background,
-  },
-  bar: {
-    width: '100%',
-    borderRadius: 4,
-    minHeight: 4,
-  },
-  barLabel: {
-    fontSize: 10,
-    color: COLORS.subtext,
-    marginTop: 4,
-    fontWeight: '600',
-  },
-  topicRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 14,
-  },
-  topicEmoji: {
-    fontSize: 22,
-    marginRight: 12,
-  },
-  topicInfo: {
-    flex: 1,
-  },
-  topicLabelRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 5,
-  },
-  topicName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.text,
-    flex: 1,
-  },
-  topicSessions: {
-    fontSize: 12,
-    color: COLORS.subtext,
-    marginLeft: 8,
-  },
-  progressTrack: {
-    height: 6,
-    backgroundColor: COLORS.border,
-    borderRadius: 3,
-    overflow: 'hidden',
-    marginBottom: 4,
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 3,
-  },
-  topicMinutes: {
-    fontSize: 11,
-    color: COLORS.subtext,
-  },
-  empty: {
-    alignItems: 'center',
-    paddingVertical: 32,
-  },
-  emptyEmoji: { fontSize: 60, marginBottom: 16 },
-  emptyTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: COLORS.text,
-    marginBottom: 8,
-  },
-  emptyDesc: {
-    fontSize: 15,
-    color: COLORS.subtext,
-    textAlign: 'center',
-    lineHeight: 22,
-  },
+  heroNum: { fontSize: 36, fontWeight: '700', color: C.white, lineHeight: 40 },
+  heroLabel: { fontSize: 12, fontWeight: '700', color: 'rgba(255,255,255,0.8)', marginTop: 6 },
+  statCard: { flex: 1, backgroundColor: C.card, borderRadius: R.lg, padding: 16, borderWidth: 1, borderColor: C.border },
+  statNum: { fontSize: 30, fontWeight: '700', color: C.text, lineHeight: 34 },
+  statLabel: { fontSize: 11, fontWeight: '700', color: C.sub, marginTop: 6 },
+
+  card: { backgroundColor: C.card, borderRadius: R.lg, padding: 18, borderWidth: 1, borderColor: C.border, marginBottom: 14 },
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 16 },
+  cardTitle: { fontSize: 17, fontWeight: '700', color: C.text },
+  cardSub: { fontSize: 12, fontWeight: '700', color: C.sub },
+
+  barChart: { flexDirection: 'row', alignItems: 'flex-end', gap: 6, height: 100 },
+  barCol: { flex: 1, alignItems: 'center', gap: 7 },
+  barTrack: { flex: 1, justifyContent: 'flex-end', width: '100%', alignItems: 'center' },
+  bar: { width: '70%', borderRadius: 6 },
+  barLabel: { fontSize: 11, fontWeight: '800' },
+
+  weekHeaders: { flexDirection: 'row', marginBottom: 8 },
+  weekHeader: { flex: 1, textAlign: 'center', fontSize: 11, fontWeight: '800', color: C.sub },
+  calGrid: { flexDirection: 'row', flexWrap: 'wrap' },
+  calCell: { width: `${100 / 7}%`, aspectRatio: 1, alignItems: 'center', justifyContent: 'center', padding: 2 },
+  calDay: { width: '90%', aspectRatio: 1, borderRadius: R.full, alignItems: 'center', justifyContent: 'center' },
+  calDayText: { fontSize: 12, fontWeight: '700', color: C.text },
+
+  topicList: { gap: 16 },
+  topicRow: { gap: 7 },
+  topicHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  topicName: { fontSize: 14, fontWeight: '700', color: C.text },
+  topicMeta: { fontSize: 12, color: C.sub, fontWeight: '600' },
+  progressTrack: { height: 8, backgroundColor: C.statBg, borderRadius: 4, overflow: 'hidden' },
+  progressFill: { height: '100%', borderRadius: 4 },
+
+  empty: { alignItems: 'center', paddingVertical: 40 },
+  emptyEmoji: { fontSize: 50, marginBottom: 12 },
+  emptyTitle: { fontSize: 20, fontWeight: '700', color: C.text, marginBottom: 6 },
+  emptySub: { fontSize: 14, color: C.sub, textAlign: 'center' },
 });

@@ -1,192 +1,92 @@
 import React, { useState } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  Alert,
+  View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useApp } from '../../src/context/AppContext';
-import { COLORS, TOPIC_COLORS, TOPIC_EMOJIS, RADIUS, SHADOW } from '../../src/theme';
+import { C, R, SHADOW, TOPIC_COLORS, TOPIC_EMOJIS } from '../../src/theme';
 
-function uid() {
-  return Math.random().toString(36).slice(2) + Date.now().toString(36);
-}
+function uid() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
 
 export default function NewTopicScreen() {
   const { addTopic } = useApp();
   const router = useRouter();
-
   const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [color, setColor] = useState(TOPIC_COLORS[0]);
+  const [desc, setDesc] = useState('');
+  const [colorIdx, setColorIdx] = useState(0);
   const [emoji, setEmoji] = useState(TOPIC_EMOJIS[0]);
 
-  const handleCreate = async () => {
-    if (!name.trim()) {
-      Alert.alert('Name required', 'Please enter a name for this topic.');
-      return;
-    }
-    await addTopic({
-      id: uid(),
-      name: name.trim(),
-      description: description.trim(),
-      color,
-      emoji,
-      isActive: true,
-      createdAt: new Date().toISOString(),
-    });
+  const create = async () => {
+    if (!name.trim()) { Alert.alert('Name required'); return; }
+    const { color, soft } = TOPIC_COLORS[colorIdx];
+    await addTopic({ id: uid(), name: name.trim(), description: desc.trim(), color, soft, emoji, isActive: true, createdAt: new Date().toISOString() });
     router.back();
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['bottom']}>
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.content}
-        keyboardShouldPersistTaps="handled"
-      >
-        <Text style={styles.label}>Topic Name *</Text>
-        <TextInput
-          value={name}
-          onChangeText={setName}
-          placeholder="e.g. Self-confidence, Gratitude…"
-          placeholderTextColor={COLORS.subtext}
-          style={styles.input}
-          maxLength={50}
-        />
+    <SafeAreaView style={s.safe} edges={['bottom']}>
+      <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
+        <Text style={s.label}>Name *</Text>
+        <TextInput value={name} onChangeText={setName} placeholder="e.g. Self-confidence" placeholderTextColor={C.sub} style={s.input} maxLength={50} />
 
-        <Text style={styles.label}>Description</Text>
-        <TextInput
-          value={description}
-          onChangeText={setDescription}
-          placeholder="Optional short description"
-          placeholderTextColor={COLORS.subtext}
-          style={[styles.input, styles.inputMulti]}
-          multiline
-          numberOfLines={3}
-          maxLength={150}
-        />
+        <Text style={s.label}>Description</Text>
+        <TextInput value={desc} onChangeText={setDesc} placeholder="Optional" placeholderTextColor={C.sub} style={[s.input, s.inputMulti]} multiline numberOfLines={3} maxLength={150} />
 
-        <Text style={styles.label}>Emoji</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.pickerRow}
-        >
-          {TOPIC_EMOJIS.map((e) => (
-            <TouchableOpacity
-              key={e}
-              style={[
-                styles.emojiBtn,
-                emoji === e && styles.emojiBtnActive,
-              ]}
-              onPress={() => setEmoji(e)}
-            >
-              <Text style={styles.emojiText}>{e}</Text>
-            </TouchableOpacity>
-          ))}
+        <Text style={s.label}>Emoji</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <View style={s.emojiRow}>
+            {TOPIC_EMOJIS.map((e) => (
+              <TouchableOpacity key={e} style={[s.emojiBtn, emoji === e && s.emojiBtnSel]} onPress={() => setEmoji(e)}>
+                <Text style={s.emojiText}>{e}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </ScrollView>
 
-        <Text style={styles.label}>Color</Text>
-        <View style={styles.colorRow}>
-          {TOPIC_COLORS.map((c) => (
-            <TouchableOpacity
-              key={c}
-              style={[
-                styles.colorBtn,
-                { backgroundColor: c },
-                color === c && styles.colorBtnActive,
-              ]}
-              onPress={() => setColor(c)}
-            />
+        <Text style={s.label}>Color</Text>
+        <View style={s.colorRow}>
+          {TOPIC_COLORS.map(({ color }, i) => (
+            <TouchableOpacity key={i} style={[s.colorBtn, { backgroundColor: color }, colorIdx === i && s.colorBtnSel]} onPress={() => setColorIdx(i)} />
           ))}
         </View>
 
-        <TouchableOpacity style={styles.createBtn} onPress={handleCreate}>
-          <Text style={styles.createBtnText}>Create Topic</Text>
+        {/* Preview */}
+        <View style={[s.preview, { borderLeftColor: TOPIC_COLORS[colorIdx].color }]}>
+          <View style={[s.swatch, { backgroundColor: TOPIC_COLORS[colorIdx].soft }]}>
+            <Text style={{ fontSize: 20 }}>{emoji}</Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={s.previewName}>{name || 'Topic name'}</Text>
+            {desc ? <Text style={s.previewDesc}>{desc}</Text> : null}
+          </View>
+        </View>
+
+        <TouchableOpacity style={s.createBtn} onPress={create}>
+          <Text style={s.createBtnText}>Create topic</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: COLORS.background },
-  scroll: { flex: 1 },
-  content: { padding: 20, paddingBottom: 40 },
-  label: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: COLORS.subtext,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 8,
-    marginTop: 20,
-  },
-  input: {
-    backgroundColor: COLORS.card,
-    borderRadius: RADIUS.sm,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: COLORS.text,
-  },
-  inputMulti: {
-    height: 88,
-    textAlignVertical: 'top',
-  },
-  pickerRow: {
-    marginBottom: 4,
-  },
-  emojiBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: RADIUS.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 8,
-    backgroundColor: COLORS.card,
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  emojiBtnActive: {
-    borderColor: COLORS.primary,
-    backgroundColor: COLORS.primary + '18',
-  },
+const s = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: C.bg },
+  scroll: { padding: 20, paddingBottom: 40 },
+  label: { fontSize: 11, fontWeight: '800', color: C.sub, letterSpacing: 0.5, textTransform: 'uppercase', marginTop: 22, marginBottom: 8 },
+  input: { backgroundColor: C.card, borderRadius: R.md, borderWidth: 1, borderColor: C.border, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, color: C.text },
+  inputMulti: { height: 90, textAlignVertical: 'top' },
+  emojiRow: { flexDirection: 'row', gap: 8, paddingBottom: 4 },
+  emojiBtn: { width: 48, height: 48, borderRadius: R.sm, borderWidth: 2, borderColor: 'transparent', backgroundColor: C.card, alignItems: 'center', justifyContent: 'center' },
+  emojiBtnSel: { borderColor: C.accent, backgroundColor: C.accentSoft },
   emojiText: { fontSize: 24 },
-  colorRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  colorBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    borderWidth: 3,
-    borderColor: 'transparent',
-  },
-  colorBtnActive: {
-    borderColor: COLORS.text,
-  },
-  createBtn: {
-    marginTop: 36,
-    backgroundColor: COLORS.primary,
-    borderRadius: RADIUS.md,
-    paddingVertical: 16,
-    alignItems: 'center',
-    ...SHADOW,
-  },
-  createBtnText: {
-    color: COLORS.white,
-    fontSize: 17,
-    fontWeight: '700',
-  },
+  colorRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  colorBtn: { width: 38, height: 38, borderRadius: 19, borderWidth: 3, borderColor: 'transparent' },
+  colorBtnSel: { borderColor: C.text },
+  preview: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: C.card, borderRadius: R.lg, padding: 14, borderWidth: 1, borderColor: C.border, borderLeftWidth: 4, marginTop: 24 },
+  swatch: { width: 44, height: 44, borderRadius: R.sm, alignItems: 'center', justifyContent: 'center' },
+  previewName: { fontSize: 16, fontWeight: '700', color: C.text },
+  previewDesc: { fontSize: 12, color: C.sub, marginTop: 2 },
+  createBtn: { marginTop: 28, backgroundColor: C.text, borderRadius: R.lg, paddingVertical: 17, alignItems: 'center', ...SHADOW, shadowColor: C.text, shadowOpacity: 0.25 },
+  createBtnText: { color: C.white, fontSize: 16, fontWeight: '800' },
 });

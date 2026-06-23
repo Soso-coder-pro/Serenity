@@ -1,39 +1,29 @@
 import { Tabs } from 'expo-router';
+import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '../../src/theme';
+import { C } from '../../src/theme';
 
 export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: COLORS.primary,
-        tabBarInactiveTintColor: COLORS.subtext,
+        tabBarActiveTintColor: C.accent,
+        tabBarInactiveTintColor: C.sub,
         tabBarStyle: {
-          backgroundColor: COLORS.card,
-          borderTopColor: COLORS.border,
-          height: 60,
-          paddingBottom: 8,
+          backgroundColor: 'rgba(251,247,241,0.95)',
+          borderTopColor: C.border,
+          height: 64,
+          paddingBottom: 10,
         },
-        headerStyle: { backgroundColor: COLORS.primary },
-        headerTintColor: COLORS.white,
-        headerTitleStyle: { fontWeight: '700' },
+        headerShown: false,
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Topics',
+          title: 'Today',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="leaf-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="history"
-        options={{
-          title: 'History',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="time-outline" size={size} color={color} />
+            <Ionicons name="sunny-outline" size={size} color={color} />
           ),
         }}
       />
@@ -43,6 +33,15 @@ export default function TabLayout() {
           title: 'Progress',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="bar-chart-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="history"
+        options={{
+          title: 'History',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="time-outline" size={size} color={color} />
           ),
         }}
       />

@@ -1,61 +1,49 @@
-export const COLORS = {
-  primary: '#7C5CBF',
-  primaryLight: '#9B7FD4',
-  primaryDark: '#5A3E9A',
-  background: '#F8F7FF',
+export const C = {
+  bg: '#FBF7F1',
   card: '#FFFFFF',
-  text: '#2D2D3A',
-  subtext: '#8E8EA0',
-  border: '#E8E8F0',
-  success: '#52D48F',
-  warning: '#FFB347',
-  danger: '#FF6B6B',
+  border: '#ECE4D8',
+  statBg: '#F4EEE6',
+  text: '#36303A',
+  sub: '#9A9298',
+  dim: '#6B6470',
+  accent: '#5E4F8C',
+  accentMid: '#7C6BAE',
+  accentSoft: '#EBE4F5',
+  accentLight: '#E0D6F2',
+  heroFrom: '#7C6BAE',
+  heroTo: '#5E4F8C',
+  sessBg: '#6F5FA6',
+  success: '#52B788',
+  danger: '#C0544A',
+  warn: '#C2954B',
   white: '#FFFFFF',
 };
 
 export const TOPIC_COLORS = [
-  '#7C5CBF',
-  '#5C9BF5',
-  '#4CAF8A',
-  '#F5A623',
-  '#E91E8C',
-  '#00BCD4',
-  '#FF6B6B',
-  '#795548',
+  { color: '#7C6BAE', soft: '#EBE4F5' },
+  { color: '#C77B8B', soft: '#F7E7EB' },
+  { color: '#4A7FA8', soft: '#DCF0F8' },
+  { color: '#5A8F70', soft: '#DCF0E6' },
+  { color: '#C2954B', soft: '#F6EEDD' },
+  { color: '#4A8FA5', soft: '#D6EFF4' },
+  { color: '#9C6464', soft: '#F5E4E4' },
+  { color: '#6B8F4A', soft: '#E4F0D6' },
 ];
 
 export const TOPIC_EMOJIS = [
-  '🧘',
-  '💜',
-  '🌟',
-  '🌸',
-  '🌈',
-  '🌿',
-  '💫',
-  '🔥',
-  '🌊',
-  '☀️',
-  '🦋',
-  '🌺',
+  '🧘', '💜', '💛', '💚', '❤️', '🌟', '🌸', '🌿',
+  '🦋', '🌊', '☀️', '🔥', '💫', '🌈', '🕊️', '✨',
 ];
 
-export const FONTS = {
-  regular: 'System',
-  medium: 'System',
-  bold: 'System',
-};
+export const MOOD_LABELS = ['', 'Heavy', 'Low', 'Okay', 'Good', 'Radiant'];
+export const MOOD_EMOJIS = ['', '😔', '😕', '😐', '🙂', '😄'];
 
-export const RADIUS = {
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 24,
-};
+export const R = { sm: 8, md: 14, lg: 18, xl: 22, full: 999 };
 
 export const SHADOW = {
-  shadowColor: '#000',
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.08,
-  shadowRadius: 8,
+  shadowColor: '#36303A',
+  shadowOffset: { width: 0, height: 3 },
+  shadowOpacity: 0.07,
+  shadowRadius: 10,
   elevation: 3,
 };

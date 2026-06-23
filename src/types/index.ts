@@ -3,6 +3,7 @@ export interface Topic {
   name: string;
   description: string;
   color: string;
+  soft: string;
   emoji: string;
   isActive: boolean;
   createdAt: string;
@@ -17,15 +18,19 @@ export interface Affirmation {
   createdAt: string;
 }
 
+export type SessionMode = 'manual' | 'target' | 'timer';
+
 export interface Session {
   id: string;
   topicId: string;
   topicName: string;
   topicColor: string;
-  topicEmoji: string;
+  topicSoft: string;
   startedAt: string;
-  endedAt: string;
   durationMinutes: number;
   affirmationsReached: number;
   notes: string;
+  moodBefore: number | null;
+  moodAfter: number | null;
+  mode: SessionMode;
 }
