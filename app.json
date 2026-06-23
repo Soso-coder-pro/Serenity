@@ -18,6 +18,10 @@
       "package": "com.serenity.app"
     },
 
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    },
     "plugins": [
       "expo-router"
     ],
