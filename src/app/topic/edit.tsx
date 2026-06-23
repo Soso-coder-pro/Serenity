@@ -22,6 +22,7 @@ export default function EditTopicScreen() {
   const [desc, setDesc] = useState(topic?.description ?? '');
   const [colorIdx, setColorIdx] = useState(initialColorIdx >= 0 ? initialColorIdx : 0);
   const [emoji, setEmoji] = useState(topic?.emoji ?? TOPIC_EMOJIS[0]);
+  const [goalStr, setGoalStr] = useState(topic?.globalGoal ? String(topic.globalGoal) : '');
 
   if (!topic) {
     return <View style={s.center}><Text style={s.sub}>Topic not found.</Text></View>;
@@ -30,7 +31,8 @@ export default function EditTopicScreen() {
   const save = async () => {
     if (!name.trim()) { Alert.alert('Name required'); return; }
     const { color, soft } = TOPIC_COLORS[colorIdx];
-    await updateTopic({ ...topic, name: name.trim(), description: desc.trim(), color, soft, emoji });
+    const globalGoal = goalStr.trim() ? parseInt(goalStr.trim(), 10) : undefined;
+    await updateTopic({ ...topic, name: name.trim(), description: desc.trim(), color, soft, emoji, globalGoal });
     router.back();
   };
 
@@ -72,6 +74,13 @@ export default function EditTopicScreen() {
             />
           ))}
         </View>
+
+        <Text style={s.label}>Global Goal (optional)</Text>
+        <TextInput
+          value={goalStr} onChangeText={setGoalStr}
+          placeholder="e.g. 10000" placeholderTextColor={C.sub}
+          style={s.input} keyboardType="numeric" maxLength={10}
+        />
 
         {/* Preview */}
         <View style={[s.preview, { borderLeftColor: TOPIC_COLORS[colorIdx].color }]}>

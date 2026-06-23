@@ -17,6 +17,53 @@ function fmt(sec: number) {
   const m = Math.floor(sec / 60), s = sec % 60;
   return `${pad(m)}:${pad(s)}`;
 }
+function fmtNum(n: number) { return n.toLocaleString(); }
+
+interface PieProps {
+  progress: number; // 0–1
+  size: number;
+  fillColor: string;
+  bgColor: string;
+  children?: React.ReactNode;
+}
+
+function PieProgress({ progress, size, fillColor, bgColor, children }: PieProps) {
+  const half = size / 2;
+  const clamped = Math.min(Math.max(progress, 0), 1);
+  const deg = clamped * 360;
+
+  // Right half sweeps 0→180° (first 50%)
+  const rightRotate = `${Math.min(deg, 180) - 180}deg`;
+  // Left half sweeps 0→180° (second 50%), only rendered once > 50%
+  const leftRotate = `${Math.max(deg - 180, 0)}deg`;
+
+  return (
+    <View style={{ width: size, height: size, borderRadius: half, backgroundColor: bgColor, overflow: 'hidden' }}>
+      {/* Right sweep: clips right half, rotates a full square */}
+      <View style={{ position: 'absolute', top: 0, right: 0, width: half, height: size, overflow: 'hidden' }}>
+        <View style={{
+          position: 'absolute', top: 0, left: -half, width: size, height: size,
+          backgroundColor: fillColor,
+          transform: [{ rotate: rightRotate }],
+        }} />
+      </View>
+      {/* Left sweep: only once past 50% */}
+      {deg > 180 && (
+        <View style={{ position: 'absolute', top: 0, left: 0, width: half, height: size, overflow: 'hidden' }}>
+          <View style={{
+            position: 'absolute', top: 0, left: 0, width: size, height: size,
+            backgroundColor: fillColor,
+            transform: [{ rotate: leftRotate }],
+          }} />
+        </View>
+      )}
+      {/* Inner content */}
+      <View style={{ ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' }}>
+        {children}
+      </View>
+    </View>
+  );
+}
 
 export default function ActiveScreen() {
   const { topicId, mode: modeParam, target: targetParam, moodBefore: mbParam } =
@@ -51,6 +98,10 @@ export default function ActiveScreen() {
     displayMode === 'global' ? globalBase + count :
     displayMode === 'daily'  ? dailyBase + count :
     count;
+
+  const globalGoal = topic?.globalGoal ?? 0;
+  const showPie = displayMode === 'global' && globalGoal > 0 && mode !== 'timer';
+  const pieProgress = globalGoal > 0 ? Math.min(1, (globalBase + count) / globalGoal) : 0;
 
   const MODE_LABELS: Record<DisplayMode, string> = {
     session: 'Session',
@@ -145,31 +196,56 @@ export default function ActiveScreen() {
         <View style={s.center}>
           {mode === 'manual' && (
             <View style={s.manualWrap}>
-              <TouchableOpacity style={s.circle} onPress={tap} activeOpacity={0.8}>
-                <Text style={s.circleCount}>{displayCount}</Text>
-                <Text style={s.circleLabel}>{MODE_LABELS[displayMode].toLowerCase()}</Text>
-              </TouchableOpacity>
+              {showPie ? (
+                <TouchableOpacity onPress={tap} activeOpacity={0.8}>
+                  <PieProgress progress={pieProgress} size={218} fillColor="rgba(255,255,255,0.35)" bgColor="rgba(255,255,255,0.10)">
+                    {/* Inner circle cutout */}
+                    <View style={s.pieInner}>
+                      <Text style={s.circleCount}>{fmtNum(displayCount)}</Text>
+                      <Text style={s.circleLabel}>/ {fmtNum(globalGoal)}</Text>
+                      <Text style={s.piePct}>{Math.round(pieProgress * 100)}%</Text>
+                    </View>
+                  </PieProgress>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity style={s.circle} onPress={tap} activeOpacity={0.8}>
+                  <Text style={s.circleCount}>{fmtNum(displayCount)}</Text>
+                  <Text style={s.circleLabel}>{MODE_LABELS[displayMode].toLowerCase()}</Text>
+                </TouchableOpacity>
+              )}
               <Text style={s.hint}>Tap the circle for each one</Text>
             </View>
           )}
 
           {mode === 'target' && (
             <View style={s.targetWrap}>
-              <TouchableOpacity
-                style={[s.ringOuter, { borderColor: 'rgba(255,255,255,0.3)' }]}
-                onPress={tap}
-                activeOpacity={0.85}
-              >
-                <View style={[s.ringFill, { height: `${pct * 100}%` }]} />
-                <View style={s.ringInner}>
-                  <Text style={s.circleCount}>{displayCount}</Text>
-                  <Text style={s.circleOf}>
-                    {displayMode === 'session' ? `of ${target}` : MODE_LABELS[displayMode].toLowerCase()}
-                  </Text>
-                </View>
-              </TouchableOpacity>
+              {showPie ? (
+                <TouchableOpacity onPress={tap} activeOpacity={0.85}>
+                  <PieProgress progress={pieProgress} size={218} fillColor="rgba(255,255,255,0.35)" bgColor="rgba(255,255,255,0.08)">
+                    <View style={s.pieInner}>
+                      <Text style={s.circleCount}>{fmtNum(displayCount)}</Text>
+                      <Text style={s.circleLabel}>/ {fmtNum(globalGoal)}</Text>
+                      <Text style={s.piePct}>{Math.round(pieProgress * 100)}%</Text>
+                    </View>
+                  </PieProgress>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={[s.ringOuter, { borderColor: 'rgba(255,255,255,0.3)' }]}
+                  onPress={tap}
+                  activeOpacity={0.85}
+                >
+                  <View style={[s.ringFill, { height: `${pct * 100}%` }]} />
+                  <View style={s.ringInner}>
+                    <Text style={s.circleCount}>{fmtNum(displayCount)}</Text>
+                    <Text style={s.circleOf}>
+                      {displayMode === 'session' ? `of ${target}` : MODE_LABELS[displayMode].toLowerCase()}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              )}
               <Text style={s.hint}>
-                {remaining > 0 ? `${remaining} to go — stay with each one` : 'Goal reached — keep flowing ✨'}
+                {remaining > 0 && !showPie ? `${remaining} to go — stay with each one` : showPie && pieProgress < 1 ? `${fmtNum(Math.max(0, globalGoal - (globalBase + count)))} to go` : 'Goal reached — keep flowing ✨'}
               </Text>
             </View>
           )}
@@ -247,10 +323,17 @@ const s = StyleSheet.create({
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.25)',
     alignItems: 'center', justifyContent: 'center',
   },
-  circleCount: { fontSize: 68, fontWeight: '700', color: C.white, lineHeight: 76 },
+  circleCount: { fontSize: 52, fontWeight: '700', color: C.white, lineHeight: 60 },
   circleLabel: { fontSize: 12, color: 'rgba(255,255,255,0.65)', fontWeight: '700', letterSpacing: 0.5, marginTop: 2 },
   circleOf: { fontSize: 14, color: 'rgba(255,255,255,0.7)', fontWeight: '700', marginTop: 4 },
   hint: { fontSize: 14, color: 'rgba(255,255,255,0.7)', fontWeight: '600', textAlign: 'center' },
+
+  pieInner: {
+    width: 160, height: 160, borderRadius: 80,
+    backgroundColor: 'rgba(0,0,0,0.18)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  piePct: { fontSize: 13, color: 'rgba(255,255,255,0.8)', fontWeight: '800', marginTop: 2 },
 
   targetWrap: { alignItems: 'center', gap: 22 },
   ringOuter: {

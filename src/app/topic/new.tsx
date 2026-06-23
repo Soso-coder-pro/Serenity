@@ -16,11 +16,13 @@ export default function NewTopicScreen() {
   const [desc, setDesc] = useState('');
   const [colorIdx, setColorIdx] = useState(0);
   const [emoji, setEmoji] = useState(TOPIC_EMOJIS[0]);
+  const [goalStr, setGoalStr] = useState('');
 
   const create = async () => {
     if (!name.trim()) { Alert.alert('Name required'); return; }
     const { color, soft } = TOPIC_COLORS[colorIdx];
-    await addTopic({ id: uid(), name: name.trim(), description: desc.trim(), color, soft, emoji, isActive: true, createdAt: new Date().toISOString() });
+    const globalGoal = goalStr.trim() ? parseInt(goalStr.trim(), 10) : undefined;
+    await addTopic({ id: uid(), name: name.trim(), description: desc.trim(), color, soft, emoji, isActive: true, createdAt: new Date().toISOString(), globalGoal });
     router.back();
   };
 
@@ -50,6 +52,13 @@ export default function NewTopicScreen() {
             <TouchableOpacity key={i} style={[s.colorBtn, { backgroundColor: color }, colorIdx === i && s.colorBtnSel]} onPress={() => setColorIdx(i)} />
           ))}
         </View>
+
+        <Text style={s.label}>Global Goal (optional)</Text>
+        <TextInput
+          value={goalStr} onChangeText={setGoalStr}
+          placeholder="e.g. 10000" placeholderTextColor={C.sub}
+          style={s.input} keyboardType="numeric" maxLength={10}
+        />
 
         {/* Preview */}
         <View style={[s.preview, { borderLeftColor: TOPIC_COLORS[colorIdx].color }]}>

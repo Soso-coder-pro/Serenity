@@ -8,6 +8,7 @@ export interface Topic {
   isActive: boolean;
   createdAt: string;
   endedAt?: string;
+  globalGoal?: number;
 }
 
 export interface Affirmation {
