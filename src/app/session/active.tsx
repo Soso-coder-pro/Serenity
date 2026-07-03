@@ -61,14 +61,15 @@ function PieProgress({ progress, size, fillColor, bgColor, children }: PieProps)
 }
 
 export default function ActiveScreen() {
-  const { topicId, mode: modeParam, target: targetParam, moodBefore: mbParam } =
-    useLocalSearchParams<{ topicId: string; mode: string; target: string; moodBefore: string }>();
+  const { topicId, mode: modeParam, target: targetParam, timerDur: tdParam, moodBefore: mbParam } =
+    useLocalSearchParams<{ topicId: string; mode: string; target: string; timerDur: string; moodBefore: string }>();
   const router = useRouter();
   const { topics, hapticsEnabled, sessions } = useApp();
 
   const topic = topics.find((t) => t.id === topicId);
   const mode = (modeParam as SessionMode) || 'manual';
   const target = parseInt(targetParam || '21', 10);
+  const timerTotalSec = mode === 'timer' ? parseInt(tdParam || '10', 10) * 60 : 0;
   const moodBefore = mbParam ? parseInt(mbParam, 10) : null;
 
   const [elapsed, setElapsed] = useState(0);
@@ -80,6 +81,10 @@ export default function ActiveScreen() {
   const pausedMs = useRef(0);
   const pausedAt = useRef<number | null>(null);
   const breathe = useRef(new Animated.Value(1)).current;
+  const alarmFiredRef = useRef(false);
+
+  const remaining = timerTotalSec > 0 ? Math.max(0, timerTotalSec - elapsed) : null;
+  const timerPct = timerTotalSec > 0 ? Math.min(1, elapsed / timerTotalSec) : 0;
 
   // Pre-compute base counts from past sessions
   const todayStr = new Date().toDateString();
@@ -125,6 +130,17 @@ export default function ActiveScreen() {
     }
     if (!hit) goalReachedRef.current = false;
   }, [count, mode, target, globalGoal, globalBase, hapticsEnabled]);
+
+  // Alarm when countdown hits zero
+  useEffect(() => {
+    if (mode !== 'timer' || remaining === null || remaining > 0 || alarmFiredRef.current) return;
+    alarmFiredRef.current = true;
+    if (Platform.OS !== 'web') {
+      const fire = (delay: number) =>
+        setTimeout(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success), delay);
+      fire(0); fire(350); fire(700); fire(1050); fire(1400);
+    }
+  }, [remaining, mode]);
 
   useEffect(() => {
     if (mode !== 'timer') return;
@@ -261,11 +277,38 @@ export default function ActiveScreen() {
 
           {mode === 'timer' && (
             <View style={s.timerWrap}>
-              <Animated.View style={[s.halo, { transform: [{ scale: breathe }] }]} />
-              <Animated.View style={[s.breatheCircle, { transform: [{ scale: breathe }] }]}>
-                <Text style={s.breatheText}>breathe</Text>
-              </Animated.View>
-              <Text style={s.hint}>Just be present — log your count after</Text>
+              {timerTotalSec > 0 ? (
+                <>
+                  <PieProgress
+                    progress={1 - timerPct}
+                    size={218}
+                    fillColor={remaining === 0 ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.30)'}
+                    bgColor="rgba(255,255,255,0.08)"
+                  >
+                    <View style={s.pieInner}>
+                      {remaining === 0 ? (
+                        <Text style={[s.breatheText, { fontSize: 18 }]}>✓ Terminé !</Text>
+                      ) : (
+                        <>
+                          <Text style={s.countdownTime}>{fmt(remaining!)}</Text>
+                          <Text style={s.breatheText}>restant</Text>
+                        </>
+                      )}
+                    </View>
+                  </PieProgress>
+                  <Text style={s.hint}>
+                    {remaining === 0 ? 'Session terminée — tu peux noter ton compte' : 'Reste présent·e…'}
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <Animated.View style={[s.halo, { transform: [{ scale: breathe }] }]} />
+                  <Animated.View style={[s.breatheCircle, { transform: [{ scale: breathe }] }]}>
+                    <Text style={s.breatheText}>breathe</Text>
+                  </Animated.View>
+                  <Text style={s.hint}>Just be present — log your count after</Text>
+                </>
+              )}
             </View>
           )}
         </View>
@@ -362,6 +405,7 @@ const s = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   breatheText: { fontSize: 14, fontWeight: '700', color: 'rgba(255,255,255,0.85)', letterSpacing: 0.5 },
+  countdownTime: { fontSize: 42, fontWeight: '700', color: C.white, lineHeight: 48 },
 
   incrCol: { paddingRight: 20, gap: 10, alignItems: 'center' },
   incrBtn: {

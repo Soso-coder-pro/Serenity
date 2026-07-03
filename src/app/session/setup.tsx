@@ -26,6 +26,7 @@ export default function SetupScreen() {
   const [topicId, setTopicId] = useState(defaultTopic?.id ?? '');
   const [mode, setMode] = useState<SessionMode>('manual');
   const [target, setTarget] = useState(21);
+  const [timerDur, setTimerDur] = useState(10);
   const [moodBefore, setMoodBefore] = useState<number | null>(null);
 
   const topic = activeTopics.find((t) => t.id === topicId);
@@ -38,6 +39,7 @@ export default function SetupScreen() {
         topicId,
         mode,
         target: String(target),
+        timerDur: String(timerDur),
         moodBefore: moodBefore !== null ? String(moodBefore) : '',
       },
     });
@@ -131,6 +133,46 @@ export default function SetupScreen() {
           </>
         )}
 
+        {mode === 'timer' && (
+          <>
+            <Text style={s.sectionLabel}>Durée du minuteur</Text>
+            <View style={s.targetRow}>
+              <View style={s.stepper}>
+                <TouchableOpacity style={s.stepBtn} onPress={() => setTimerDur((v) => Math.max(1, v - 1))}>
+                  <Text style={s.stepBtnText}>−</Text>
+                </TouchableOpacity>
+                <TextInput
+                  style={s.stepInput}
+                  value={String(timerDur)}
+                  onChangeText={(t) => {
+                    const n = parseInt(t, 10);
+                    if (!isNaN(n) && n > 0) setTimerDur(n);
+                    else if (t === '') setTimerDur(1);
+                  }}
+                  keyboardType="numeric"
+                  selectTextOnFocus
+                  returnKeyType="done"
+                />
+                <TouchableOpacity style={s.stepBtn} onPress={() => setTimerDur((v) => v + 1)}>
+                  <Text style={s.stepBtnText}>+</Text>
+                </TouchableOpacity>
+                <Text style={[s.rowDesc, { marginLeft: 4 }]}>min</Text>
+              </View>
+            </View>
+            <View style={s.presetRow}>
+              {[5, 10, 15, 20, 30, 45].map((v) => (
+                <TouchableOpacity
+                  key={v}
+                  style={[s.presetBtn, timerDur === v && s.presetBtnActive]}
+                  onPress={() => setTimerDur(v)}
+                >
+                  <Text style={[s.presetText, timerDur === v && s.presetTextActive]}>{v}m</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </>
+        )}
+
         <Text style={s.sectionLabel}>How do you feel right now?</Text>
         <View style={s.moodCard}>
           <MoodPicker value={moodBefore} onChange={setMoodBefore} accentColor={topic?.color ?? C.accentMid} />
@@ -199,6 +241,12 @@ const s = StyleSheet.create({
     borderBottomWidth: 2, borderBottomColor: C.accent,
     paddingHorizontal: 4, paddingVertical: 2,
   },
+
+  presetRow: { flexDirection: 'row', gap: 8, marginTop: 10, flexWrap: 'wrap' },
+  presetBtn: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: R.full, backgroundColor: C.card, borderWidth: 1, borderColor: C.border },
+  presetBtnActive: { backgroundColor: C.accent, borderColor: C.accent },
+  presetText: { fontSize: 13, fontWeight: '700', color: C.sub },
+  presetTextActive: { color: C.white },
 
   moodCard: { backgroundColor: C.card, borderRadius: R.lg, padding: 18, borderWidth: 1, borderColor: C.border },
 
