@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "Serenity",
+    "slug": "serenity",
+    "scheme": "serenity",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.serenity.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#7C5CBF"
+      },
+      "package": "com.serenity.app"
+    },
+
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": false
+    }
+  }
+}
